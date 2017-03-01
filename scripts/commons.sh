@@ -171,5 +171,5 @@ function userError {
 
   echo "$message"
   notify-send "--icon=$icon" --urgency=critical "$title" "$message"
-  exit $2
+  exit $exitCode
 }
