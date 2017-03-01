@@ -9,6 +9,9 @@ This piece of code is for you if:
 * you are ok with storing credentials (login/password) in a gnome keychain
 * your ssh server responds on ICMP pings and it is acceptable to you to check its health by pinging it
 
+## install dependencies
+Run install_prerequisites.sh to install required dependencies. You need to be root at this stage.
+
 ## setup watchdog autostart
 Run sshfs-wd-create-autostart.sh to create startup shortcut for your desktop environment system. A file sshfs-wd-autostart.desktop will be created. Next time you login to DE it should be executed and all the watchdogs launched.
 
