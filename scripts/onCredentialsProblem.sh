@@ -2,8 +2,8 @@
 
 echo ">> onCredentialsProblem.sh"
 
-base=$(readlink -f $(dirname "$0"))
-source "$base/commons.sh"
+#base=$(readlink -f $(dirname "$0"))
+source "$base/scripts/commons.sh"
 
 taskName="$1"
 remoteHost="$2"
@@ -11,7 +11,7 @@ remoteHost="$2"
 yad --notification --image="important" --text="Credentials needed for $remoteHost"
 
 # ask for username
-login0=$(getLogin "$taskName")
+login0=$(credentials_getLogin "$taskName")
 
 while :
 do
@@ -46,13 +46,13 @@ do
   fi
 
   if [ "$login" != "$login0" ]; then
-    setLogin "$taskName" "$login"
+    credentials_setLogin "$taskName" "$login"
   fi
   break
 done
 
 # password
-password=$(getPassword "$taskName")
+password=$(credentials_getPassword "$taskName")
 
 fakePassword=
 if [ ! -z "$password" ]; then
@@ -84,7 +84,7 @@ if [ $? != "0" ]; then
 fi
 
 if [ "$password" != "$fakePassword" ]; then
-  setPassword "$taskName" "$password"
+  credentials_setPassword "$taskName" "$password"
 fi
 
 echo "<< onCredentialsProblem.sh"

@@ -2,8 +2,7 @@
 
 echo ">> connect_sshfs starts"
 
-base=$(readlink -f $(dirname "$0"))
-source "$base/commons.sh"
+source "$base/scripts/commons.sh"
 
 taskName="$1"
 remoteName="$2"
@@ -11,19 +10,29 @@ remotePath="$3"
 localFolder="$4"
 options="$5"
 
+
+# init credential storage
+echo "Init credential storage..."
+if credentialStorage_init; then
+  echo "...done"
+else
+  echo "FAILED with code: $?"
+  exit $EXIT_CODE_CREDENTIAL_STORAGE_FAILED
+fi
+
 # login
-if isLoginExists "$taskName"
+if credentials_isLoginExists "$taskName"
 then
-  connectLogin=$(getLogin "$taskName")
+  connectLogin=$(credentials_getLogin "$taskName")
   echo "Using login stored to keyring: ${connectLogin}"
 else
   userError "$taskName" "No login found for $taskName." $EXIT_CODE_NO_USERNAME
 fi
 
 # password
-if isPasswordExists "$taskName"
+if credentials_isPasswordExists "$taskName"
 then
-  connectPassword=$(getPassword "$taskName")
+  connectPassword=$(credentials_getPassword "$taskName")
   echo "Using password stored to keyring"
 else
   userError "$taskName" "No password found for ${remoteName}." $EXIT_CODE_NO_PASSWORD

@@ -10,7 +10,11 @@ This piece of code is for you if:
 * your ssh server responds on ICMP pings and it is acceptable to you to check its health by pinging it
 
 ## install dependencies
-Run install_prerequisites.sh to install required dependencies. You need to be root at this stage.
+Run 
+  * install_prerequisites_desktop.sh  - if you going to use it in graphical desktop environment.
+  * install_prerequisites_server.sh - if you going to use it in server environment without a need of DE communication.
+  
+Both scripts are to install required dependencies. You need to be root at this stage.
 
 ## setup watchdog autostart
 Run sshfs-wd-create-autostart.sh to create startup shortcut for your desktop environment system. A file sshfs-wd-autostart.desktop will be created. Next time you login to DE it should be executed and all the watchdogs launched.
@@ -21,4 +25,9 @@ Run sshfs-wd-set-connection.sh to create a connection configuration for your rem
 ## delete a connection
 Run sshfs-wd-remove-connection.sh <connection_name>. It will basically delete corresponding config file from ~/.config/sshfs-wd/ and delete credentials from a keyring.
 
+## setup systemd service
+Run sshfs-wd-create-systemd-service.sh in systemd-service/ folder. It will create appropriate service file for systemd. After creation you can use 
+ sudo systemctl start sshfs-wd-instance.service 
+to start new service.
+Don`t forget to setup a connection(s) with help of sshfs-wd-set-connection.sh (see above)
 

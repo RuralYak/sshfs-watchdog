@@ -1,12 +1,5 @@
 #!/bin/bash
 
-
-base=$(readlink -f $(dirname "$0"))
-source "$base/commons.sh"
-
-configFile="$1"
-
-
 # set defaults
 name=
 enabled=1
@@ -20,6 +13,9 @@ negativeThreshold=60
 interactive=1
 
 
+source "$base/scripts/commons.sh"
+
+configFile="$1"
 
 
 function failIfEmpty {
@@ -66,7 +62,7 @@ function connect {
   if [ "$interactive" == "1" ]; then
     while :
     do
-      resultOutput=$("${base}"/connect_sshfs.sh "${name}" "${remoteHost}" "${remotePath}" "${localPath}" "${fuseOpts}")
+      resultOutput=$("$base"/scripts/connect_sshfs.sh "${name}" "${remoteHost}" "${remotePath}" "${localPath}" "${fuseOpts}")
       resultCode=$?
 
       echo "$resultOutput"
@@ -76,13 +72,13 @@ function connect {
           break
         ;;
         $EXIT_CODE_SSH_UNKNOWN_HOST ) # EXIT_CODE_SSH_UNKNOWN_HOST
-          "$base"/onUnknownHost.sh "$remoteHost"
+          "$base"/scripts/onUnknownHost.sh "$remoteHost"
         ;;
         $EXIT_CODE_NO_USERNAME|$EXIT_CODE_NO_PASSWORD|$EXIT_CODE_SSH_PROBE_FAILED_PERMISSION_DENIED ) # username or password is empty or bad
-          "$base"/onCredentialsProblem.sh "$name" "$remoteHost"
+          "$base"/scripts/onCredentialsProblem.sh "$name" "$remoteHost"
         ;;
         * )
-          if "$base"/onGenericError.sh "$name" "$remoteHost" "$resultOutput"
+          if "$base"/scripts/onGenericError.sh "$name" "$remoteHost" "$resultOutput"
           then
             echo "One more try requested..."
           else
@@ -94,7 +90,7 @@ function connect {
       echo "Retrying connect..."
     done
   else
-    "${base}"/connect_sshfs.sh "${name}" "${remoteHost}" "${remotePath}" "${localPath}" "${fuseOpts}"
+    "${base}"/scripts/connect_sshfs.sh "${name}" "${remoteHost}" "${remotePath}" "${localPath}" "${fuseOpts}"
     resultCode=$?
   fi
 
@@ -102,7 +98,7 @@ function connect {
 }
 
 function disconnect {
-  "${base}"/disconnect_sshfs.sh "${name}" "${localPath}"
+  "${base}"/scripts/disconnect_sshfs.sh "${name}" "${localPath}"
 }
 
 function onExit1 {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-base=$(readlink -f $(dirname "$0"))
-source "$base/commons.sh"
+#base=$(readlink -f $(dirname "$0"))
+source "$base/scripts/commons.sh"
 
 remoteHost="$1"
 

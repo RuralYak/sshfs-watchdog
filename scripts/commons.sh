@@ -1,7 +1,10 @@
 
+#base=$(readlink -f $(dirname "$0"))
+
 # connect exit codes
 EXIT_CODE_NO_USERNAME=100
 EXIT_CODE_NO_PASSWORD=101
+EXIT_CODE_CREDENTIAL_STORAGE_FAILED=103
 EXIT_CODE_SSHFS_DAEMON_ALREADY_RUNNING=110
 EXIT_CODE_LOCAL_MOUNTPOINT_PROBLEM=120
 EXIT_CODE_TEMPORARY_PIPE_PROBLEM=130
@@ -11,12 +14,33 @@ EXIT_CODE_SSH_PROBE_FAILED_UNKNOWN=160
 EXIT_CODE_SSH_PROBE_FAILED_PERMISSION_DENIED=161
 EXIT_CODE_SSHFS_TERMINATION_TIMEOUT=170
 
-KEYCHAIN_LOGIN_KEY="login"
-KEYCHAIN_PASSWORD_KEY="password"
+function die {
+  local frame=0
+  while caller $frame; do
+    ((frame++));
+  done
+  echo "$*"
+  exit 1
+}
 
 # globaly shared common variables
 user=$(whoami)
-configDir=~/.config/sshfs-wd
+home=~
+configDir="${SSHFS_WD_CONFIG_DIR:-$home/.config/sshfs-wd}"
+configFile="$configDir/sshfs-wd.config"
+connectionConfigDir="$configDir/connections"
+
+# load global config file
+if [ -f "$configFile" ]; then
+  echo "Sourcing config file: $configFile"
+  source "$configFile"
+else
+  echo "No global config file. Using defaults."
+fi
+
+# load credentials adapter
+CREDENTIALS_ADAPTER="${SSHFS_WD_CREDENTIALS_ADAPTER:-gnomeKeychain}"
+source "$base/scripts/credentialStorages/$CREDENTIALS_ADAPTER.sh"
 
 function debug {
   local file="/tmp/sshfs-wd-$user-debug.log"
@@ -29,102 +53,12 @@ function debug {
   fi
 }
 
-# keychain related routines
-function isKeychainElementExists {
-  local attribute="$1"
-  local value="$2"
-
-  if [ -f "$attribute.$value" ]; then # if stub exists
-    return 0
-  fi
-
-  #debug "secret-tool lookup $attribute $value"
-  secret-tool lookup "$attribute" "$value" 1>/dev/null
-}
-
-function getKeychainElement {
-  local attribute="$1"
-  local value="$2"
-
-  if [ -f "$attribute.$value" ]; then # if stub exists
-    cat "$attribute.$value"
-    return $?
-  fi
-
-  secret-tool lookup "$attribute" "$value"
-}
-
-function setKeychainElement {
-  local attribute="$1"
-  local value="$2"
-  local content="$3"
-
-  if [ -f "$attribute.$value" ]; then # if stub exists
-    echo "$content" > "$attribute.$value"
-    return $?
-  fi
-
-  echo "$content" | secret-tool store --label="$attribute $value" "$attribute" "$value"
-}
-
-function removeKeychainElement {
-  local attribute="$1"
-  local value="$2"
-
-  secret-tool clear "$attribute" "$value"
-}
-
-function isLoginExists {
-  local unitName="$1"
-
-  isKeychainElementExists "$unitName" "$KEYCHAIN_LOGIN_KEY"
-}
-
-function getLogin {
-  local unitName="$1"
-  getKeychainElement "$unitName" "$KEYCHAIN_LOGIN_KEY"
-}
-
-function setLogin {
-  local unitName="$1"
-  login="$2"
-
-  setKeychainElement "$unitName" "$KEYCHAIN_LOGIN_KEY" "$login"
-}
-
-function removeLogin {
-  local unitName="$1"
-  removeKeychainElement "$unitName" "$KEYCHAIN_LOGIN_KEY"
-}
-
-function isPasswordExists {
-  local unitName="$1"
-  isKeychainElementExists "$unitName" "$KEYCHAIN_PASSWORD_KEY"
-}
-
-function getPassword {
-  local unitName="$1"
-  getKeychainElement "$unitName" "$KEYCHAIN_PASSWORD_KEY"
-}
-
-function setPassword {
-  local unitName="$1"
-  local password="$2"
-
-  setKeychainElement "$unitName" "$KEYCHAIN_PASSWORD_KEY" "$password"
-}
-
-function removePassword {
-  local unitName="$1"
-  removeKeychainElement "$unitName" "$KEYCHAIN_PASSWORD_KEY"
-}
-
 # ssh related stuff
 function addHostToKnown {
   local remoteHost="$1"
 
   ssh-keygen -R "$remoteHost"
-  ssh-keyscan -H "$remoteHost" >>~/.ssh/known_hosts
+  ssh-keyscan -H "$remoteHost" >>"$home/.ssh/known_hosts"
 }
 
 function isHostKnown {
@@ -172,4 +106,23 @@ function userError {
   echo "$message"
   notify-send "--icon=$icon" --urgency=critical "$title" "$message"
   exit $exitCode
+}
+
+# ------------------------------------------------------------------------------
+# config file related
+
+function createOrModifyKeyValue {
+  local CONFIG_FILE="$1"
+  local TARGET_KEY="$2"
+  local REPLACEMENT_VALUE="$3"
+
+  if [ -f "$CONFIG_FILE" ]; then
+    if grep -q "^[ ^I]*$TARGET_KEY=" "$CONFIG_FILE"; then
+     sed -i -e "s^A^\\([ ^I]*$TARGET_KEY=\\).*$^A\\1$REPLACEMENT_VALUE^A" "$CONFIG_FILE"
+    else
+       echo "$TARGET_KEY=\"$REPLACEMENT_VALUE\"" >>"$CONFIG_FILE"
+    fi
+  else
+    echo "$TARGET_KEY=\"$REPLACEMENT_VALUE\"" >"$CONFIG_FILE"
+  fi
 }
