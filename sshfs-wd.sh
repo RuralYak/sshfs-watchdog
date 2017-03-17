@@ -1,29 +1,29 @@
 #!/bin/bash
 echo "sshfs-wd.sh start"
 
-base=$(readlink -f $(dirname "$0"))
+#base=$(readlink -f $(dirname "$0"))
+#$(readlink -f $(dirname "$0"))/scripts/variables.sh
+export base=$(readlink -f $(dirname "$0"))
 source "$base/scripts/commons.sh"
 
 command="$1"
 
-if mkdir -p "${configDir}"; then
-  echo "Using config dir: ${configDir}"
+if mkdir -p "$connectionConfigDir"; then
+  echo "Using config dir: $connectionConfigDir"
 else
-  echo "Failed to create config dir: ${configDir}"
+  echo "Failed to create config dir: $connectionConfigDir"
   exit 1
 fi
 
-if ls "$configDir"/*.config 1> /dev/null 2>&1; then
+if ls $connectionConfigDir/*.config 1> /dev/null 2>&1; then
   echo "Some configs are in place..."
 else
   echo "No configs found in config folder (*.config). Exiting..."
-  exit 1
+  exit 0
 fi
 
-echo "Base: $base"
-
 # process configurations
-for conf in "$configDir"/*.config
+for conf in "$connectionConfigDir"/*.config
 do
   if [ ! -f "$conf" ]; then
     continue
@@ -67,7 +67,7 @@ do
 
   configFileBasename=$(basename "$conf")
   # start watch dog instance
-  ( "$base"/scripts/sshfs-wd-instance.sh "$conf"
+  ( "$base"/scripts/sshfs-wd-instance.sh "$conf" 2>&1
 
     if [ $? == "0" ] ; then
       echo "${configFileBasename} started"

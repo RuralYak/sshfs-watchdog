@@ -1,0 +1,11 @@
+[Unit]
+Description=SSHF watchdog daemon launcher (#SUFFIX#)
+
+[Service]
+Environment=SSHFS_WD_CONFIG_DIR=#CONFIG_DIR#
+ExecStart=/bin/bash #SSFS_WD_SCRIPT#
+Type=forking
+User=#USER#
+
+[Install]
+WantedBy=multi-user.target

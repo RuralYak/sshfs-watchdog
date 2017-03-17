@@ -1,6 +1,6 @@
 #!/bin/bash
 
-base=$(readlink -f $(dirname "$0"))
+export base=$(readlink -f $(dirname "$0"))
 source "$base/scripts/commons.sh"
 
 name="$1"
@@ -14,7 +14,7 @@ if [ -z "$name" ]; then
   read -e -p "Enter connection name: " name
 fi
 
-configFile="$configDir/$name.config"
+configFile="$connectionConfigDir/$name.config"
 
 if [ -f "$configFile" ]; then
   echo "WARNING: Configuration file $configFile already exists. It will be replaced."
@@ -48,11 +48,20 @@ fi
 echo "Adding $remoteHost to known hosts..."
 addHostToKnown "$remoteHost"
 
-echo "Storing credentials to keychain..."
-setLogin "$name" "$login"
-setPassword "$name" "$password"
+# init credential storage
+echo "Init credential storage..."
+if credentialStorage_init; then
+  echo "...done"
+else
+  echo "FAILED with code: $?"
+  exit $EXIT_CODE_CREDENTIAL_STORAGE_FAILED
+fi
 
-if mkdir -p "$configDir"
+echo "Storing credentials..."
+credentials_setLogin "$name" "$login"
+credentials_setPassword "$name" "$password"
+
+if mkdir -p "$connectionConfigDir"
 then
   echo "Writing config file to $configFile ..."
   echo "name=$name" >"$configFile"

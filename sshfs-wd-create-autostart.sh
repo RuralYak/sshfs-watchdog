@@ -1,6 +1,6 @@
 #!/bin/bash
 
-base=$(readlink -f $(dirname "$0"))
+export base=$(readlink -f $(dirname "$0"))
 autostartDir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
 
 for autoFile in $autostartDir/*.desktop
@@ -24,11 +24,11 @@ newAutoFile="$autostartDir/sshfs-wd-autostart.desktop"
 
 if mkdir -p "$autostartDir"
 then
-  echo "[Desktop Entry]" > "$newAutoFile"
-  echo "Type=Application" >> "$newAutoFile"
-  echo "Name=Autostart configured SSFS watchdogs" >> "$newAutoFile"
-  echo "Exec=$base/sshfs-wd.sh" >> "$newAutoFile"
-  echo "Hidden=false" >> "$newAutoFile"
+  echo "[Desktop Entry]" >"$newAutoFile"
+  echo "Type=Application" >>"$newAutoFile"
+  echo "Name=Autostart configured SSFS watchdogs" >>"$newAutoFile"
+  echo "Exec=$base/sshfs-wd.sh" >>"$newAutoFile"
+  echo "Hidden=false" >>"$newAutoFile"
 
   echo "New file has been created: $newAutoFile"
 else

@@ -1,8 +1,8 @@
 #/bin/bash
 echo ">> disconnect_sshfs starts"
 
-base=$(readlink -f $(dirname "$0"))
-source "$base/commons.sh"
+#base=$(readlink -f $(dirname "$0"))
+source "$base/scripts/commons.sh"
 
 taskName="$1"
 localFolder="$2"
